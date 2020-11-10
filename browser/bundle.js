@@ -1,24 +1,45 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 var Tone = require('tone');
 
+const lowPass = new Tone.Filter({
+	frequency: 14000,
+}).toDestination();
 
 
-console.log('hello world, glad to see you')
+// we can make our own hi hats with 
+// the noise synth and a sharp filter envelope
+const openHiHat = new Tone.NoiseSynth({
+	volume: -10,
+	envelope: {
+		attack: 0.01,
+		decay: 0.3
+	},
+}).connect(lowPass);
+
+const openHiHatPart = new Tone.Part(((time) => {
+	openHiHat.triggerAttack(time);
+}), [{ "8n": 2 }, { "8n": 6 }]).start(0);
+
+const closedHiHat = new Tone.NoiseSynth({
+	volume: -10,
+	envelope: {
+		attack: 0.01,
+		decay: 0.15
+	},
+}).connect(lowPass);
+
+const closedHatPart = new Tone.Part(((time) => {
+	closedHiHat.triggerAttack(time);
+}), [0, { "16n": 1 }, { "8n": 1 }, { "8n": 3 }, { "8n": 4 }, { "8n": 5 }, { "8n": 7 }, { "8n": 8 }]).start(0);
+
+
+console.log('hello world, glad to see you!!')
 //create a synth and connect it to the main output (your speakers)
-const synthA = new Tone.AMSynth().toDestination();
-const synthB = new Tone.FMSynth().toDestination();
-//play a note every quarter-note
-const loopA = new Tone.Loop(time => {
-	synthA.triggerAttackRelease("C2", "8n", time);
-}, "4n").start(0);
-//play another note every off quarter-note, by starting it "8n"
-const loopB = new Tone.Loop(time => {
-	synthB.triggerAttackRelease("C4", "8n", time);
-}, "4n").start("8n");
-// the loops start when the Transport is started
-Tone.Transport.start()
+Tone.Transport.loop = true;
+//Tone.Transport.loopStart = 0;
+//Tone.Transport.loopEnd = "1:0";
+Tone.Transport.start();
 // ramp up to 800 bpm over 10 seconds
-Tone.Transport.bpm.rampTo(800, 3);
 
 document.querySelector('button')?.addEventListener('click', async () => {
 	await Tone.start()
